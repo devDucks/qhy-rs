@@ -9,3 +9,4 @@ download-linux-sdk:
 	mkdir -p /tmp/qhy-linux64
 	tar -xf /tmp/linux64.tgz -C /tmp/qhy-linux64
 	cp /tmp/qhy-linux64/sdk_linux64_${SDK_VER}/usr/local/lib/* vendored/camera/linux/x64
+	cp /tmp/qhy-linux64/sdk_linux64_${SDK_VER}/usr/local/include/* libqhy-sys/include/
