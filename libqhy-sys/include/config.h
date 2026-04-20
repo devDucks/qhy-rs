@@ -50,6 +50,6 @@
 
 
 
-#endif
-
 #define __CPP_MODE__ 1
+
+#endif

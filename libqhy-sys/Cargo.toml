@@ -3,10 +3,9 @@ name = "libqhy-sys"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
 [lib]
 name = "libqhy_sys"
-path = "lib.rs"
+path = "src/lib.rs"
 
 [dependencies]
 libc = "0.2"

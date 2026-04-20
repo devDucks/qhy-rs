@@ -3,25 +3,35 @@ extern crate bindgen;
 use std::env;
 use std::path::PathBuf;
 
+//config.h  qhyccdcamdef.h  qhyccderr.h  qhyccd.h  qhyccdstruct.h
 fn camera_bindings() {
     let path = std::fs::canonicalize("../vendored/camera/linux/x64");
     // Tell cargo to look for shared libraries in the specified directory
     println!("cargo:rustc-link-search={}", path.unwrap().display());
 
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
-    println!("cargo:rustc-link-lib=ASICamera2");
+    // Tell cargo to tell rustc to link the headers
+    println!("cargo:rustc-link-lib=config");
+    println!("cargo:rustc-link-lib=qhyccdcamdef");
+    println!("cargo:rustc-link-lib=qhyccderr");
+    println!("cargo:rustc-link-lib=qhyccd");
+    println!("cargo:rustc-link-lib=qhyccdstruct");
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
-    println!("cargo:rerun-if-changed=./include/ASICamera2.h");
+    println!("cargo:rerun-if-changed=./include/wrapper.h");
+    println!("cargo:rerun-if-changed=./include/config.h");
+    println!("cargo:rerun-if-changed=./include/qhyccdcamdef.h");
+    println!("cargo:rerun-if-changed=./include/qhyccderr.h");
+    println!("cargo:rerun-if-changed=./include/qhyccd.h");
+    println!("cargo:rerun-if-changed=./include/qhyccdstruct.h");
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
     let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
-        .header("./include/ASICamera2.h")
+        // wrapper.h includes all SDK headers with __CPP_MODE__ forced to 0
+        // (config.h defines it as 1, which would pull in C++-only headers)
+        // and includes stdbool.h so `bool` is recognized in C mode.
+        .header("./include/wrapper.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
