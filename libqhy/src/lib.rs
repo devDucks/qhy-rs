@@ -240,6 +240,12 @@ pub fn is_control_available(handle: &CameraHandle, control: ControlId) -> bool {
     unsafe { libqhy_sys::camera::IsQHYCCDControlAvailable(handle.as_ptr(), control as i32) == 0 }
 }
 
+pub fn set_param(handle: &CameraHandle, control: ControlId, value: f64) -> Result<(), QHYError> {
+    check_error(unsafe {
+        libqhy_sys::camera::SetQHYCCDParam(handle.as_ptr(), control as i32, value)
+    })
+}
+
 pub fn get_available_controls(handle: &CameraHandle) -> AvailableControls {
     use strum::IntoEnumIterator;
 
