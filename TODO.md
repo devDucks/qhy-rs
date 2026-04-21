@@ -23,12 +23,12 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 
 ### Core setup (implement first — required for any capture workflow)
 
-- [ ] `InitQHYCCD` — initialize camera parameters after opening; must be called before capturing
-- [ ] `SetQHYCCDStreamMode` — select single-frame (0) or live/continuous (1) mode
+- [x] `InitQHYCCD` → `init_camera()`
+- [x] `SetQHYCCDStreamMode` → `set_stream_mode()`
 - [x] `GetQHYCCDNumberOfReadMode` → `get_number_of_read_modes()`
 - [x] `GetQHYCCDReadModeName` → `get_read_mode_name()`
 - [ ] `GetQHYCCDReadModeResolution` — get image resolution for a given readout mode
-- [ ] `SetQHYCCDReadMode` — set the active readout mode
+- [x] `SetQHYCCDReadMode` → `set_read_mode()`
 
 ### Image area & format
 

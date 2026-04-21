@@ -215,6 +215,23 @@ pub fn get_read_mode_name(handle: &CameraHandle, mode: u32) -> Result<String, QH
     Ok(name)
 }
 
+pub fn init_camera(handle: &CameraHandle) -> Result<(), QHYError> {
+    check_error(unsafe { libqhy_sys::camera::InitQHYCCD(handle.as_ptr()) })
+}
+
+pub enum StreamMode {
+    SingleFrame = 0,
+    Live = 1,
+}
+
+pub fn set_stream_mode(handle: &CameraHandle, mode: StreamMode) -> Result<(), QHYError> {
+    check_error(unsafe { libqhy_sys::camera::SetQHYCCDStreamMode(handle.as_ptr(), mode as u8) })
+}
+
+pub fn set_read_mode(handle: &CameraHandle, mode: u32) -> Result<(), QHYError> {
+    check_error(unsafe { libqhy_sys::camera::SetQHYCCDReadMode(handle.as_ptr(), mode) })
+}
+
 pub fn is_control_available(handle: &CameraHandle, control: ControlId) -> bool {
     unsafe { libqhy_sys::camera::IsQHYCCDControlAvailable(handle.as_ptr(), control as i32) == 0 }
 }
