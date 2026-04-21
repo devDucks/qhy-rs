@@ -1,0 +1,8 @@
+[package]
+name = "libqhy"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libqhy-sys = { version = "0.1.0", path = "../libqhy-sys" }
+log = "0.4"
