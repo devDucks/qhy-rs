@@ -1,0 +1,14 @@
+[package]
+name = "qhy-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+log = "0.4.29"
+
+[workspace]
+resolver = "3"
+members = [
+  "libqhy-sys",
+  "libqhy", "qhy-ccd-test",
+]
