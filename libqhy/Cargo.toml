@@ -1,6 +1,6 @@
 [package]
 name = "libqhy"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Safe Rust bindings to the QHY CCD SDK"
 license = "GPL-3.0-only"
