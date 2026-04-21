@@ -10,3 +10,8 @@ download-linux-sdk:
 	tar -xf /tmp/qhy-linux64.tgz -C /tmp/qhy-linux64
 	cp /tmp/qhy-linux64/sdk_linux64_${SDK_VER}/usr/local/lib/* vendored/camera/linux/x64
 	cp /tmp/qhy-linux64/sdk_linux64_${SDK_VER}/usr/local/include/* libqhy-sys/include/
+
+.PHONY: publish-libqhy
+
+publish-libqhy:
+	cargo publish --dry-run -p libqhy && cargo publish -p libqhy
