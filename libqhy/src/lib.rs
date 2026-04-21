@@ -134,13 +134,13 @@ pub fn read_sdk_version() -> Result<SDKVersion, QHYError> {
 }
 
 pub struct ChipInfo {
-    chip_width: f64,
-    chip_height: f64,
-    pixel_width: f64,
-    pixel_height: f64,
-    image_width: u32,
-    image_height: u32,
-    bpp: u32,
+    pub chip_width: f64,
+    pub chip_height: f64,
+    pub pixel_width: f64,
+    pub pixel_height: f64,
+    pub image_width: u32,
+    pub image_height: u32,
+    pub bpp: u32,
 }
 
 impl Display for ChipInfo {
@@ -302,6 +302,22 @@ pub fn get_single_frame(handle: &CameraHandle, buf: &mut [u8]) -> Result<FrameIn
         height,
         bpp,
         channels,
+    })
+}
+
+pub fn set_bin_mode(handle: &CameraHandle, wbin: u32, hbin: u32) -> Result<(), QHYError> {
+    check_error(unsafe { libqhy_sys::camera::SetQHYCCDBinMode(handle.as_ptr(), wbin, hbin) })
+}
+
+pub fn set_resolution(
+    handle: &CameraHandle,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+) -> Result<(), QHYError> {
+    check_error(unsafe {
+        libqhy_sys::camera::SetQHYCCDResolution(handle.as_ptr(), x, y, width, height)
     })
 }
 
