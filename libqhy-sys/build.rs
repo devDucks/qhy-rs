@@ -23,7 +23,10 @@ fn camera_bindings() {
             .unwrap_or_else(|_| vendored_lib_dir());
         println!(
             "cargo:rustc-link-search={}",
-            lib_dir.canonicalize().expect("QHYCCD_LIB_DIR not found").display()
+            lib_dir
+                .canonicalize()
+                .expect("QHYCCD_LIB_DIR not found")
+                .display()
         );
         println!("cargo:rustc-link-lib=qhyccd");
     }
