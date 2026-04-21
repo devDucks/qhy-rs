@@ -191,3 +191,22 @@ pub fn read_chip_info(handle: &CameraHandle) -> Result<ChipInfo, QHYError> {
 pub fn get_image_buffer_size(handle: &CameraHandle) -> u32 {
     unsafe { libqhy_sys::camera::GetQHYCCDMemLength(handle.as_ptr()) }
 }
+
+pub fn get_number_of_read_modes(handle: &CameraHandle) -> Result<u32, QHYError> {
+    let mut num_modes = 0u32;
+    check_error(unsafe {
+        libqhy_sys::camera::GetQHYCCDNumberOfReadModes(handle.as_ptr(), &mut num_modes)
+    })?;
+    Ok(num_modes)
+}
+
+pub fn get_read_mode_name(handle: &CameraHandle, mode: u32) -> Result<String, QHYError> {
+    let mut buf = [0i8; 64];
+    check_error(unsafe {
+        libqhy_sys::camera::GetQHYCCDReadModeName(handle.as_ptr(), mode, buf.as_mut_ptr())
+    })?;
+    let name = unsafe { CStr::from_ptr(buf.as_ptr()) }
+        .to_string_lossy()
+        .into_owned();
+    Ok(name)
+}

@@ -26,6 +26,19 @@ fn probe_camera(idx: u32) -> Result<(), libqhy::QHYError> {
         get_image_buffer_size(&handle)
     );
 
+    match get_number_of_read_modes(&handle) {
+        Ok(n) => {
+            debug!("Number of read modes for camera {}: {}", id, n);
+            for mode in 0..n {
+                match get_read_mode_name(&handle, mode) {
+                    Ok(name) => debug!("  Read mode {}: {}", mode, name),
+                    Err(_) => error!("Couldn't read mode name {} of camera {}", mode, id),
+                }
+            }
+        }
+        Err(_) => error!("Couldn't get number of read modes of camera {}", id),
+    }
+
     match close_camera(handle) {
         Ok(()) => debug!("Camera {} successfully closed", id),
         Err(_) => error!("Couldn't close camera {}", id),
