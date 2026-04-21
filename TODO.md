@@ -48,8 +48,8 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 
 ### Capture
 
-- [ ] `ExpQHYCCDSingleFrame` — start a single-frame exposure
-- [ ] `GetQHYCCDSingleFrame` — retrieve image data after single-frame exposure
+- [x] `ExpQHYCCDSingleFrame` — start a single-frame exposure
+- [x] `GetQHYCCDSingleFrame` — retrieve image data after single-frame exposure
 - [ ] `CancelQHYCCDExposingAndReadout` — abort exposure and readout
 - [ ] `CancelQHYCCDExposing` — abort exposure only (WINUSB still needs readout)
 - [ ] `BeginQHYCCDLive` — start continuous/live capture

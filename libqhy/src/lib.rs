@@ -260,6 +260,46 @@ pub fn set_param(handle: &CameraHandle, control: ControlId, value: f64) -> Resul
     })
 }
 
+pub fn exp_single_frame(handle: &CameraHandle) -> Result<(), QHYError> {
+    let ret = unsafe { libqhy_sys::camera::ExpQHYCCDSingleFrame(handle.as_ptr()) };
+    // The SDK docs say any non-QHYCCD_ERROR return is success for this call.
+    if ret == libqhy_sys::camera::QHYCCD_ERROR {
+        Err(QHYError {})
+    } else {
+        Ok(())
+    }
+}
+
+pub struct FrameInfo {
+    pub width: u32,
+    pub height: u32,
+    pub bpp: u32,
+    pub channels: u32,
+}
+
+pub fn get_single_frame(handle: &CameraHandle, buf: &mut [u8]) -> Result<FrameInfo, QHYError> {
+    let mut width = 0u32;
+    let mut height = 0u32;
+    let mut bpp = 0u32;
+    let mut channels = 0u32;
+    check_error(unsafe {
+        libqhy_sys::camera::GetQHYCCDSingleFrame(
+            handle.as_ptr(),
+            &mut width,
+            &mut height,
+            &mut bpp,
+            &mut channels,
+            buf.as_mut_ptr(),
+        )
+    })?;
+    Ok(FrameInfo {
+        width,
+        height,
+        bpp,
+        channels,
+    })
+}
+
 pub fn get_available_controls(handle: &CameraHandle) -> AvailableControls {
     use strum::IntoEnumIterator;
 
