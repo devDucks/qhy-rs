@@ -34,8 +34,8 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 
 - [ ] `GetQHYCCDEffectiveArea` — get valid image area (start coords + size)
 - [ ] `GetQHYCCDOverScanArea` — get overscan area (start coords + size)
-- [ ] `SetQHYCCDBinMode` — set horizontal/vertical binning (1x1, 2x2, etc.)
-- [ ] `SetQHYCCDResolution` — set ROI (start x/y + width/height)
+- [x] `SetQHYCCDBinMode` — set horizontal/vertical binning (1x1, 2x2, etc.)
+- [x] `SetQHYCCDResolution` — set ROI (start x/y + width/height)
 - [ ] `GetQHYCCDCurrentROI` — read back current ROI settings
 - [ ] `SetQHYCCDDebayerOnOff` — enable/disable debayering for colour cameras
 

@@ -7,3 +7,4 @@ edition = "2024"
 env_logger = "0.11.10"
 libqhy = { version = "0.1.0", path = "../libqhy" }
 log = "0.4.29"
+rfitsio = { version = "0.3.1", path = "../../rfitsio" }
