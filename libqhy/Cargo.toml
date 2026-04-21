@@ -2,6 +2,9 @@
 name = "libqhy"
 version = "0.1.0"
 edition = "2024"
+description = "Safe Rust bindings to the QHY CCD SDK"
+license = "GPL-3.0-only"
+repository = "https://github.com/devDucks/qhy-rs"
 
 [dependencies]
 libqhy-sys = { version = "0.1.0", path = "../libqhy-sys" }

@@ -2,6 +2,10 @@
 name = "libqhy-sys"
 version = "0.1.0"
 edition = "2024"
+description = "Raw FFI bindings to the QHY CCD SDK"
+license = "GPL-3.0-only"
+repository = "https://github.com/devDucks/qhy-rs"
+links = "qhyccd"
 
 [lib]
 name = "libqhy_sys"
@@ -12,3 +16,4 @@ libc = "0.2"
 
 [build-dependencies]
 bindgen = "0.72"
+pkg-config = "0.3"
