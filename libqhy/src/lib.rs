@@ -254,6 +254,11 @@ pub fn is_control_available(handle: &CameraHandle, control: ControlId) -> bool {
     unsafe { libqhy_sys::camera::IsQHYCCDControlAvailable(handle.as_ptr(), control as i32) == 0 }
 }
 
+/// Set any of the available `ControlId` to a given value of type f64.
+/// The function itself doesn't check if the ControlId exists for the given
+/// camera so the caller, if interested into not receving an error, shall
+/// first fetch available controls using [`get_available_controls`]
+/// and call set_param using the available one returned into [`AvailableControls`]
 pub fn set_param(handle: &CameraHandle, control: ControlId, value: f64) -> Result<(), QHYError> {
     check_error(unsafe {
         libqhy_sys::camera::SetQHYCCDParam(handle.as_ptr(), control as i32, value)
