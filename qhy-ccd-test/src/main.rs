@@ -39,6 +39,17 @@ fn probe_camera(idx: u32) -> Result<(), libqhy::QHYError> {
         Err(_) => error!("Couldn't get number of read modes of camera {}", id),
     }
 
+    let controls = get_available_controls(&handle);
+    debug!("Available controls for camera {}:", id);
+    let mut sorted: Vec<_> = controls.iter().collect();
+    sorted.sort_by_key(|(k, _)| **k as u32);
+    for (ctrl, val) in sorted {
+        debug!(
+            "  {:?}: current={} min={} max={} step={}",
+            ctrl, val.current, val.min, val.max, val.step
+        );
+    }
+
     match close_camera(handle) {
         Ok(()) => debug!("Camera {} successfully closed", id),
         Err(_) => error!("Couldn't close camera {}", id),

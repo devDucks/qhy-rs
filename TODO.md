@@ -41,9 +41,9 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 
 ### Camera parameter control
 
-- [ ] `IsQHYCCDControlAvailable` — check if a `CONTROL_ID` feature is supported
-- [ ] `GetQHYCCDParamMinMaxStep` — get min/max/step for a `CONTROL_ID` parameter
-- [ ] `GetQHYCCDParam` — read a camera parameter by `CONTROL_ID`
+- [x] `IsQHYCCDControlAvailable` — check if a `CONTROL_ID` feature is supported
+- [x] `GetQHYCCDParamMinMaxStep` — get min/max/step for a `CONTROL_ID` parameter
+- [x] `GetQHYCCDParam` — read a camera parameter by `CONTROL_ID`
 - [ ] `SetQHYCCDParam` — write a camera parameter by `CONTROL_ID`
 
 ### Capture

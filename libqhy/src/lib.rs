@@ -1,6 +1,10 @@
+use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::os::raw::c_uint;
+
+mod types;
+pub use types::{AvailableControls, ControlId, ControlValue};
 
 pub struct QHYError {}
 
@@ -209,4 +213,46 @@ pub fn get_read_mode_name(handle: &CameraHandle, mode: u32) -> Result<String, QH
         .to_string_lossy()
         .into_owned();
     Ok(name)
+}
+
+pub fn is_control_available(handle: &CameraHandle, control: ControlId) -> bool {
+    unsafe { libqhy_sys::camera::IsQHYCCDControlAvailable(handle.as_ptr(), control as i32) == 0 }
+}
+
+pub fn get_available_controls(handle: &CameraHandle) -> AvailableControls {
+    use strum::IntoEnumIterator;
+
+    let mut map = HashMap::new();
+    for control in ControlId::iter() {
+        if !is_control_available(handle, control) {
+            continue;
+        }
+        let mut min = 0f64;
+        let mut max = 0f64;
+        let mut step = 0f64;
+        if unsafe {
+            libqhy_sys::camera::GetQHYCCDParamMinMaxStep(
+                handle.as_ptr(),
+                control as i32,
+                &mut min,
+                &mut max,
+                &mut step,
+            )
+        } != 0
+        {
+            continue;
+        }
+        let current =
+            unsafe { libqhy_sys::camera::GetQHYCCDParam(handle.as_ptr(), control as i32) };
+        map.insert(
+            control,
+            ControlValue {
+                min,
+                max,
+                step,
+                current,
+            },
+        );
+    }
+    map
 }
