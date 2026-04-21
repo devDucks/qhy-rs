@@ -3,19 +3,27 @@ extern crate bindgen;
 use std::env;
 use std::path::PathBuf;
 
+fn vendored_lib_dir() -> PathBuf {
+    let os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let arch = match env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str() {
+        "x86_64" => "x64",
+        "aarch64" => "arm64",
+        arch => panic!("unsupported architecture: {}", arch),
+    };
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("lib")
+        .join(os)
+        .join(arch)
+}
+
 fn camera_bindings() {
     if pkg_config::probe_library("qhyccd").is_err() {
         let lib_dir = env::var("QHYCCD_LIB_DIR")
             .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../vendored/camera/linux/x64")
-            });
+            .unwrap_or_else(|_| vendored_lib_dir());
         println!(
             "cargo:rustc-link-search={}",
-            lib_dir
-                .canonicalize()
-                .expect("QHYCCD_LIB_DIR not found")
-                .display()
+            lib_dir.canonicalize().expect("QHYCCD_LIB_DIR not found").display()
         );
         println!("cargo:rustc-link-lib=qhyccd");
     }

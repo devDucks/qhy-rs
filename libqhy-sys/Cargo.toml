@@ -6,6 +6,12 @@ description = "Raw FFI bindings to the QHY CCD SDK"
 license = "GPL-3.0-only"
 repository = "https://github.com/devDucks/qhy-rs"
 links = "qhyccd"
+include = [
+    "src/**/*",
+    "include/**/*",
+    "lib/**/*",
+    "build.rs",
+]
 
 [lib]
 name = "libqhy_sys"
