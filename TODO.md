@@ -82,7 +82,7 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 
 ### Debug & events
 
-- [ ] `EnableQHYCCDMessage` — enable/disable SDK debug output
+- [x] `EnableQHYCCDMessage` — enable/disable SDK debug output
 - [ ] `EnableQHYCCDImageOSD` — overlay frame counter or GPS info on image
 - [ ] `RegisterPnpEventIn` — register callback for camera connect events
 - [ ] `RegisterPnpEventOut` — register callback for camera disconnect events
