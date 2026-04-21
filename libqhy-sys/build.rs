@@ -9,12 +9,8 @@ fn camera_bindings() {
     // Tell cargo to look for shared libraries in the specified directory
     println!("cargo:rustc-link-search={}", path.unwrap().display());
 
-    // Tell cargo to tell rustc to link the headers
-    println!("cargo:rustc-link-lib=config");
-    println!("cargo:rustc-link-lib=qhyccdcamdef");
-    println!("cargo:rustc-link-lib=qhyccderr");
+    // Tell cargo to tell rustc to link the SDK
     println!("cargo:rustc-link-lib=qhyccd");
-    println!("cargo:rustc-link-lib=qhyccdstruct");
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=./include/wrapper.h");
