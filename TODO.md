@@ -27,7 +27,7 @@ Tracks which SDK API functions have been wrapped in `libqhy/src/lib.rs`.
 - [x] `SetQHYCCDStreamMode` → `set_stream_mode()`
 - [x] `GetQHYCCDNumberOfReadMode` → `get_number_of_read_modes()`
 - [x] `GetQHYCCDReadModeName` → `get_read_mode_name()`
-- [ ] `GetQHYCCDReadModeResolution` — get image resolution for a given readout mode
+- [x] `GetQHYCCDReadModeResolution` — get image resolution for a given readout mode
 - [x] `SetQHYCCDReadMode` → `set_read_mode()`
 
 ### Image area & format

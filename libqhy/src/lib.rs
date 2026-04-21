@@ -215,6 +215,20 @@ pub fn get_read_mode_name(handle: &CameraHandle, mode: u32) -> Result<String, QH
     Ok(name)
 }
 
+pub fn get_read_mode_resolution(handle: &CameraHandle, mode: u32) -> Result<(u32, u32), QHYError> {
+    let mut width = 0u32;
+    let mut height = 0u32;
+    check_error(unsafe {
+        libqhy_sys::camera::GetQHYCCDReadModeResolution(
+            handle.as_ptr(),
+            mode,
+            &mut width,
+            &mut height,
+        )
+    })?;
+    Ok((width, height))
+}
+
 pub fn init_camera(handle: &CameraHandle) -> Result<(), QHYError> {
     check_error(unsafe { libqhy_sys::camera::InitQHYCCD(handle.as_ptr()) })
 }
