@@ -128,3 +128,66 @@ pub fn read_sdk_version() -> Result<SDKVersion, QHYError> {
         subday: subday as u8,
     })
 }
+
+pub struct ChipInfo {
+    chip_width: f64,
+    chip_height: f64,
+    pixel_width: f64,
+    pixel_height: f64,
+    image_width: u32,
+    image_height: u32,
+    bpp: u32,
+}
+
+impl Display for ChipInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(
+            f,
+            "Chip width:{} Chip height:{} Px widht:{} Px height:{} Img width:{} Img height:{} Depth:{}",
+            self.chip_width,
+            self.chip_height,
+            self.pixel_width,
+            self.pixel_height,
+            self.image_width,
+            self.image_height,
+            self.bpp
+        )
+    }
+}
+
+pub fn read_chip_info(handle: &CameraHandle) -> Result<ChipInfo, QHYError> {
+    let mut chip_width = 0f64;
+    let mut chip_height = 0f64;
+    let mut pixel_width = 0f64;
+    let mut pixel_height = 0f64;
+    let mut image_width = 0u32;
+    let mut image_height = 0u32;
+    let mut bpp = 0u32;
+
+    check_error(unsafe {
+        libqhy_sys::camera::GetQHYCCDChipInfo(
+            handle.as_ptr(),
+            &mut chip_width,
+            &mut chip_height,
+            &mut image_width,
+            &mut image_height,
+            &mut pixel_width,
+            &mut pixel_height,
+            &mut bpp,
+        )
+    })?;
+
+    Ok(ChipInfo {
+        chip_width,
+        chip_height,
+        pixel_width,
+        pixel_height,
+        image_width,
+        image_height,
+        bpp,
+    })
+}
+
+pub fn get_image_buffer_size(handle: &CameraHandle) -> u32 {
+    unsafe { libqhy_sys::camera::GetQHYCCDMemLength(handle.as_ptr()) }
+}

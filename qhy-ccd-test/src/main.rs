@@ -1,6 +1,38 @@
 use libqhy::*;
 use log::{debug, error};
 
+fn probe_camera(idx: u32) -> Result<(), libqhy::QHYError> {
+    let id = get_camera_id(idx)?;
+    debug!("Found camera {}", id);
+    let handle = open_camera(&id)?;
+    debug!("Opened camera {} successfully", id);
+
+    match read_camera_fw(&handle) {
+        Ok(fw) => debug!("FW version for camera {}: {}", id, fw),
+        Err(_) => error!("Couldn't read FW version of camera {}", id),
+    }
+    match read_sdk_version() {
+        Ok(sdk) => debug!("SDK version for camera {}: {}", id, sdk),
+        Err(_) => error!("Couldn't read SDK version of camera {}", id),
+    }
+
+    match read_chip_info(&handle) {
+        Ok(info) => debug!("Chip info => {}", info),
+        Err(_) => error!("Couldn't read chip info of camera {}", id),
+    }
+
+    debug!(
+        "Buffer to fit an image: {} bytes",
+        get_image_buffer_size(&handle)
+    );
+
+    match close_camera(handle) {
+        Ok(()) => debug!("Camera {} successfully closed", id),
+        Err(_) => error!("Couldn't close camera {}", id),
+    }
+    Ok(())
+}
+
 fn main() {
     env_logger::builder()
         .filter_level(log::LevelFilter::Debug)
@@ -11,33 +43,8 @@ fn main() {
     debug!("Found {} cameras", cam_num);
 
     for idx in 0..cam_num {
-        if let Ok(id) = get_camera_id(idx) {
-            debug!("Found camera {}", id);
-            if let Ok(handle) = open_camera(&id) {
-                debug!("Opened sucessfully camera {}", id);
-                if let Ok(fw) = read_camera_fw(&handle) {
-                    debug!("FW version for camera {}: {}", id, fw)
-                } else {
-                    error!("Couldn't read the firmware version of camera {}", id);
-                }
-
-                if let Ok(sdk) = read_sdk_version() {
-                    debug!("SDK version for camera {}: {}", id, sdk)
-                } else {
-                    error!("Couldn't read the SDK version of camera {}", id);
-                }
-
-                // We are done, close the camera
-                if let Ok(()) = close_camera(handle) {
-                    debug!("Camera {} successfully closed", id);
-                } else {
-                    error!("Couldn't close camera {}", id);
-                }
-            } else {
-                error!("Failed to get handle for camera {}", id)
-            }
-        } else {
-            error!("Couldn't read camera ID for camera {}", idx);
+        if let Err(_) = probe_camera(idx) {
+            error!("Failed to probe camera {}", idx);
         }
     }
 
