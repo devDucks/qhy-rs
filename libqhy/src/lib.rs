@@ -42,6 +42,18 @@ impl QhyCcd {
             .contains_key(&types::ControlId::CurTemp)
             .then(|| raw::get_param(&self.handle, types::ControlId::CurTemp))
     }
+
+    pub fn gain(&self) -> Option<f64> {
+        self.controls
+            .contains_key(&types::ControlId::Gain)
+            .then(|| raw::get_param(&self.handle, types::ControlId::Gain))
+    }
+
+    pub fn offset(&self) -> Option<f64> {
+        self.controls
+            .contains_key(&types::ControlId::Offset)
+            .then(|| raw::get_param(&self.handle, types::ControlId::Offset))
+    }
 }
 
 pub struct SdkContext {
