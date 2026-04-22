@@ -3,14 +3,12 @@ use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use astrotools::Lightspeed;
+use astrotools::properties::UpdatePropertyRequest;
 
 use crate::QhyLightspeed;
 
 pub enum Command {
-    SetGain(f64),
-    SetOffset(f64),
-    SetExposure(f64),
-    SetBin(u32),
+    Update(UpdatePropertyRequest),
     Shutdown,
 }
 
@@ -86,17 +84,8 @@ fn run_device(
 
 fn handle_command(device: &mut QhyLightspeed, cmd: Command) {
     match cmd {
-        Command::SetGain(v) => {
-            let _ = device.set_gain(v);
-        }
-        Command::SetOffset(v) => {
-            let _ = device.set_offset(v);
-        }
-        Command::SetExposure(v) => {
-            let _ = device.set_exposure(v);
-        }
-        Command::SetBin(v) => {
-            let _ = device.set_bin(v);
+        Command::Update(req) => {
+            let _ = device.update_property(&req.prop_name, req.value);
         }
         Command::Shutdown => {}
     }

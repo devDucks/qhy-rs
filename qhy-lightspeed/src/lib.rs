@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use astrotools::{
     Lightspeed, LightspeedError,
-    properties::{Permission, Prop, Property, RangeProperty},
+    properties::{Permission, Prop, PropValue, Property, PropertyErrorType, RangeProperty},
     types::{DevType, DeviceType},
 };
 use libqhy::QhyCcd;
@@ -32,28 +32,28 @@ impl QhyLightspeed {
         self.camera.fw_version()
     }
 
-    pub fn set_gain(&mut self, value: f64) -> Result<(), LightspeedError> {
+    fn set_gain(&mut self, value: f64) -> Result<(), LightspeedError> {
         self.gain.update(value)?;
         self.camera
             .set_gain(value)
             .map_err(|_| LightspeedError::DeviceConnectionError)
     }
 
-    pub fn set_offset(&mut self, value: f64) -> Result<(), LightspeedError> {
+    fn set_offset(&mut self, value: f64) -> Result<(), LightspeedError> {
         self.offset.update(value)?;
         self.camera
             .set_offset(value)
             .map_err(|_| LightspeedError::DeviceConnectionError)
     }
 
-    pub fn set_exposure(&mut self, value: f64) -> Result<(), LightspeedError> {
+    fn set_exposure(&mut self, value: f64) -> Result<(), LightspeedError> {
         self.exposure.update(value)?;
         self.camera
             .set_exposure(value)
             .map_err(|_| LightspeedError::DeviceConnectionError)
     }
 
-    pub fn set_bin(&mut self, bin: u32) -> Result<(), LightspeedError> {
+    fn set_bin(&mut self, bin: u32) -> Result<(), LightspeedError> {
         self.camera
             .set_bin(bin)
             .map_err(|_| LightspeedError::DeviceConnectionError)
@@ -110,7 +110,15 @@ impl Lightspeed for QhyLightspeed {
         let _ = self.is_exposing.update_int(live_is_exposing);
     }
 
-    fn update_property<T>(&mut self, _prop_name: &str, _val: T) -> Result<(), LightspeedError> {
-        todo!()
+    fn update_property(&mut self, prop_name: &str, val: PropValue) -> Result<(), LightspeedError> {
+        match prop_name {
+            "gain" => self.set_gain(f64::try_from(val)?),
+            "offset" => self.set_offset(f64::try_from(val)?),
+            "exposure" => self.set_exposure(f64::try_from(val)?),
+            "bin" => self.set_bin(u32::try_from(val)?),
+            _ => Err(LightspeedError::PropertyError(
+                PropertyErrorType::InvalidValue,
+            )),
+        }
     }
 }
