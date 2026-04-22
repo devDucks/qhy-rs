@@ -9,6 +9,9 @@ pub struct QHYError {}
 
 pub struct CameraHandle(*mut libqhy_sys::camera::qhyccd_handle);
 
+// Safety: the QHY SDK is per-handle; each handle is used from exactly one thread.
+unsafe impl Send for CameraHandle {}
+
 impl Drop for CameraHandle {
     fn drop(&mut self) {
         unsafe { libqhy_sys::camera::CloseQHYCCD(self.0) };

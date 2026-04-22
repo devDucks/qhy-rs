@@ -1,3 +1,5 @@
+pub mod runtime;
+
 use serde::Serialize;
 
 use astrotools::{
@@ -48,6 +50,12 @@ impl QhyLightspeed {
         self.exposure.update(value)?;
         self.camera
             .set_exposure(value)
+            .map_err(|_| LightspeedError::DeviceConnectionError)
+    }
+
+    pub fn set_bin(&mut self, bin: u32) -> Result<(), LightspeedError> {
+        self.camera
+            .set_bin(bin)
             .map_err(|_| LightspeedError::DeviceConnectionError)
     }
 }
