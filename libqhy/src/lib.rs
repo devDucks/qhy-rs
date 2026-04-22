@@ -2,11 +2,13 @@ pub mod raw;
 pub mod types;
 
 use raw::{CameraHandle, ChipInfo};
+use types::AvailableControls;
 
 pub struct QhyCcd {
     id: String,
     pub handle: CameraHandle,
     pub chip_info: ChipInfo,
+    pub controls: AvailableControls,
 }
 
 impl QhyCcd {
@@ -50,10 +52,12 @@ pub fn init_sdk() -> Result<SdkContext, SdkError> {
             Ok(info) => info,
             Err(_) => continue,
         };
+        let controls = raw::get_available_controls(&handle);
         cameras.push(QhyCcd {
             id,
             handle,
             chip_info,
+            controls,
         });
     }
 
