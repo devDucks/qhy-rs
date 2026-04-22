@@ -100,6 +100,7 @@ fn acquire_dark_frame(handle: &CameraHandle, idx: u32) -> Result<(), String> {
 
     info!("Exposing for 1 second...");
     exp_single_frame(&handle).map_err(|_| "Exposure trigger failed")?;
+    // GetQHYCCDSingleFrame blocks until the exposure completes and the frame is read out.
     let frame = get_single_frame(&handle, &mut buf).map_err(|_| "Failed to read frame data")?;
     info!(
         "Frame acquired: {}x{} @ {}-bit ({} ch)",

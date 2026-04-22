@@ -5,10 +5,11 @@ use std::time::{Duration, Instant};
 use astrotools::Lightspeed;
 use astrotools::properties::UpdatePropertyRequest;
 
-use crate::QhyLightspeed;
+use crate::{ExposureValue, QhyLightspeed};
 
 pub enum Command {
     Update(UpdatePropertyRequest),
+    Expose(ExposureValue),
     Shutdown,
 }
 
@@ -49,6 +50,15 @@ pub fn spawn_devices(
         .collect()
 }
 
+fn publish_frame(frame: crate::Frame, topic: &str, state_tx: &mpsc::SyncSender<OutboundMessage>) {
+    if let Ok(payload) = serde_json::to_string(&frame) {
+        let _ = state_tx.try_send(OutboundMessage {
+            topic: format!("{}/frame", topic),
+            payload,
+        });
+    }
+}
+
 fn run_device(
     mut device: QhyLightspeed,
     cmd_rx: mpsc::Receiver<Command>,
@@ -68,10 +78,21 @@ fn run_device(
             });
         }
 
+        if let Some(frame) = device.try_collect_frame() {
+            publish_frame(frame, &topic, &state_tx);
+        }
+
         loop {
             match cmd_rx.try_recv() {
                 Ok(Command::Shutdown) => return,
-                Ok(cmd) => handle_command(&mut device, cmd),
+                Ok(Command::Expose(val)) => {
+                    if let Ok(Some(frame)) = device.start_exposure(val) {
+                        publish_frame(frame, &topic, &state_tx);
+                    }
+                }
+                Ok(Command::Update(req)) => {
+                    let _ = device.update_property(&req.prop_name, req.value);
+                }
                 Err(_) => break,
             }
         }
@@ -79,14 +100,5 @@ fn run_device(
         if let Some(remaining) = interval.checked_sub(tick.elapsed()) {
             thread::sleep(remaining);
         }
-    }
-}
-
-fn handle_command(device: &mut QhyLightspeed, cmd: Command) {
-    match cmd {
-        Command::Update(req) => {
-            let _ = device.update_property(&req.prop_name, req.value);
-        }
-        Command::Shutdown => {}
     }
 }

@@ -82,6 +82,22 @@ impl QhyCcd {
     pub fn is_exposing(&self) -> bool {
         raw::get_param(&self.handle, types::ControlId::IsExposingDone) == 0.0
     }
+
+    pub fn start_exposure(&self) -> Result<raw::ExpResult, raw::QHYError> {
+        raw::exp_single_frame(&self.handle)
+    }
+
+    pub fn read_frame(&self, buf: &mut [u8]) -> Result<raw::FrameInfo, raw::QHYError> {
+        raw::get_single_frame(&self.handle, buf)
+    }
+
+    pub fn image_buffer_size(&self) -> u32 {
+        raw::get_image_buffer_size(&self.handle)
+    }
+
+    pub fn cancel_exposure(&self) -> Result<(), raw::QHYError> {
+        raw::cancel_exposing_and_readout(&self.handle)
+    }
 }
 
 pub struct SdkContext {

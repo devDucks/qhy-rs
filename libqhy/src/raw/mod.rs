@@ -273,14 +273,26 @@ pub fn get_param(handle: &CameraHandle, control: ControlId) -> f64 {
     unsafe { libqhy_sys::camera::GetQHYCCDParam(handle.as_ptr(), control as i32) }
 }
 
-pub fn exp_single_frame(handle: &CameraHandle) -> Result<(), QHYError> {
+pub enum ExpResult {
+    /// Camera returned QHYCCD_READ_DIRECTLY — frame is already in the buffer,
+    /// call get_single_frame immediately.
+    ReadDirectly,
+    /// Camera returned QHYCCD_SUCCESS — exposure is in progress, poll
+    /// IsExposingDone before calling get_single_frame.
+    Exposing,
+}
+
+pub fn exp_single_frame(handle: &CameraHandle) -> Result<ExpResult, QHYError> {
     let ret = unsafe { libqhy_sys::camera::ExpQHYCCDSingleFrame(handle.as_ptr()) };
-    // The SDK docs say any non-QHYCCD_ERROR return is success for this call.
-    if ret == libqhy_sys::camera::QHYCCD_ERROR {
-        Err(QHYError {})
-    } else {
-        Ok(())
+    match ret {
+        r if r == libqhy_sys::camera::QHYCCD_ERROR => Err(QHYError {}),
+        r if r == libqhy_sys::camera::QHYCCD_READ_DIRECTLY => Ok(ExpResult::ReadDirectly),
+        _ => Ok(ExpResult::Exposing),
     }
+}
+
+pub fn cancel_exposing_and_readout(handle: &CameraHandle) -> Result<(), QHYError> {
+    check_error(unsafe { libqhy_sys::camera::CancelQHYCCDExposingAndReadout(handle.as_ptr()) })
 }
 
 pub struct FrameInfo {
