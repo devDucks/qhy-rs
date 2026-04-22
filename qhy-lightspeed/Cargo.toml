@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 astrotools = "*"
 libqhy = { path = "../libqhy" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

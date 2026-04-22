@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use astrotools::{
     Lightspeed, LightspeedError,
     properties::{Permission, Prop, Property, RangeProperty},
@@ -5,9 +7,12 @@ use astrotools::{
 };
 use libqhy::QhyCcd;
 
+#[derive(Serialize)]
 pub struct QhyLightspeed {
+    #[serde(skip)]
     camera: QhyCcd,
     connected: Property<bool>,
+    #[serde(skip)]
     exposure: RangeProperty<f64>,
     gain: RangeProperty<f64>,
     offset: RangeProperty<f64>,
