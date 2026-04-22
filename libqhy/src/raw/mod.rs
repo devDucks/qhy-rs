@@ -3,8 +3,7 @@ use std::ffi::{CStr, CString};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::os::raw::c_uint;
 
-mod types;
-pub use types::{AvailableControls, ControlId, ControlValue};
+pub use crate::types::{AvailableControls, ControlId, ControlValue};
 
 pub struct QHYError {}
 
