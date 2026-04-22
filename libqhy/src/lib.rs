@@ -1,7 +1,7 @@
 pub mod raw;
 pub mod types;
 
-use raw::{CameraHandle, ChipInfo};
+use raw::{CameraHandle, ChipInfo, FwVersion, SDKVersion};
 use types::AvailableControls;
 
 pub struct QhyCcd {
@@ -9,11 +9,28 @@ pub struct QhyCcd {
     pub handle: CameraHandle,
     pub chip_info: ChipInfo,
     pub controls: AvailableControls,
+    fw_ver: FwVersion,
 }
 
 impl QhyCcd {
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    pub fn fw_version(&self) -> String {
+        self.fw_ver.to_string()
+    }
+
+    pub fn fw_major(&self) -> u16 {
+        self.fw_ver.year
+    }
+
+    pub fn fw_minor(&self) -> u8 {
+        self.fw_ver.month
+    }
+
+    pub fn fw_patch(&self) -> u8 {
+        self.fw_ver.day
     }
 
     pub fn set_bin(&self, bin: u32) -> Result<(), raw::QHYError> {
@@ -23,6 +40,25 @@ impl QhyCcd {
 
 pub struct SdkContext {
     pub cameras: Vec<QhyCcd>,
+    sdk_ver: SDKVersion,
+}
+
+impl SdkContext {
+    pub fn sdk_version(&self) -> String {
+        self.sdk_ver.to_string()
+    }
+
+    pub fn sdk_major(&self) -> u16 {
+        self.sdk_ver.year
+    }
+
+    pub fn sdk_minor(&self) -> u8 {
+        self.sdk_ver.month
+    }
+
+    pub fn sdk_patch(&self) -> u8 {
+        self.sdk_ver.day
+    }
 }
 
 impl Drop for SdkContext {
@@ -35,10 +71,13 @@ impl Drop for SdkContext {
 #[derive(Debug)]
 pub enum SdkError {
     InitFailed,
+    SdkVersionReadFailed,
 }
 
 pub fn init_sdk() -> Result<SdkContext, SdkError> {
     raw::init_resources().map_err(|_| SdkError::InitFailed)?;
+
+    let sdk_ver = raw::read_sdk_version().map_err(|_| SdkError::SdkVersionReadFailed)?;
 
     let count = raw::get_num_of_connected_cameras();
     let mut cameras = Vec::with_capacity(count as usize);
@@ -57,13 +96,18 @@ pub fn init_sdk() -> Result<SdkContext, SdkError> {
             Err(_) => continue,
         };
         let controls = raw::get_available_controls(&handle);
+        let fw_ver = match raw::read_camera_fw(&handle) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
         cameras.push(QhyCcd {
             id,
             handle,
             chip_info,
             controls,
+            fw_ver,
         });
     }
 
-    Ok(SdkContext { cameras })
+    Ok(SdkContext { cameras, sdk_ver })
 }

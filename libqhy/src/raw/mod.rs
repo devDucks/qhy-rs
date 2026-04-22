@@ -64,6 +64,7 @@ pub fn close_camera(handle: CameraHandle) -> Result<(), QHYError> {
     check_error(unsafe { libqhy_sys::camera::CloseQHYCCD(handle.as_ptr()) })
 }
 
+#[derive(Clone, Copy)]
 pub struct FwVersion {
     pub year: u16,
     pub month: u8,
@@ -76,11 +77,12 @@ impl Display for FwVersion {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct SDKVersion {
-    year: u16,
-    month: u8,
-    day: u8,
-    subday: u8,
+    pub year: u16,
+    pub month: u8,
+    pub day: u8,
+    pub subday: u8,
 }
 
 impl Display for SDKVersion {
