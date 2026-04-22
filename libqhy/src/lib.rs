@@ -5,7 +5,7 @@ use raw::{CameraHandle, ChipInfo};
 
 pub struct QhyCcd {
     id: String,
-    handle: CameraHandle,
+    pub handle: CameraHandle,
     pub chip_info: ChipInfo,
 }
 

@@ -3,9 +3,11 @@ use astrotools::{
     properties::{Permission, Property, RangeProperty},
     types::{DevType, DeviceType},
 };
+use libqhy::{QhyCcd, raw::CameraHandle};
 
 pub struct QhyLightspeed {
     camera_id: String,
+    handle: CameraHandle,
     connected: Property<bool>,
     exposure: RangeProperty<f64>,
     gain: RangeProperty<f64>,
@@ -13,11 +15,12 @@ pub struct QhyLightspeed {
     temperature: Property<f64>,
 }
 
-impl QhyLightspeed {
-    pub fn new(camera_id: String) -> Self {
+impl From<QhyCcd> for QhyLightspeed {
+    fn from(cam: QhyCcd) -> Self {
         Self {
-            camera_id,
-            connected: Property::new(false, Permission::ReadWrite),
+            camera_id: cam.id().to_string(),
+            handle: cam.handle,
+            connected: Property::new(true, Permission::ReadWrite),
             exposure: RangeProperty::new(1000.0, Permission::ReadWrite, 1.0, 3_600_000_000.0),
             gain: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 100.0),
             offset: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 255.0),
