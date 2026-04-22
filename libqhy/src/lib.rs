@@ -1,11 +1,12 @@
 pub mod raw;
 pub mod types;
 
-use raw::CameraHandle;
+use raw::{CameraHandle, ChipInfo};
 
 pub struct QhyCcd {
     id: String,
     handle: CameraHandle,
+    pub chip_info: ChipInfo,
 }
 
 impl QhyCcd {
@@ -31,7 +32,15 @@ pub fn init_sdk() -> Vec<QhyCcd> {
             Ok(h) => h,
             Err(_) => continue,
         };
-        cameras.push(QhyCcd { id, handle });
+        let chip_info = match raw::read_chip_info(&handle) {
+            Ok(info) => info,
+            Err(_) => continue,
+        };
+        cameras.push(QhyCcd {
+            id,
+            handle,
+            chip_info,
+        });
     }
 
     cameras
