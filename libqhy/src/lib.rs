@@ -54,6 +54,30 @@ impl QhyCcd {
             .contains_key(&types::ControlId::Offset)
             .then(|| raw::get_param(&self.handle, types::ControlId::Offset))
     }
+
+    pub fn gain_range(&self) -> Option<(f64, f64)> {
+        self.controls
+            .get(&types::ControlId::Gain)
+            .map(|cv| (cv.min, cv.max))
+    }
+
+    pub fn offset_range(&self) -> Option<(f64, f64)> {
+        self.controls
+            .get(&types::ControlId::Offset)
+            .map(|cv| (cv.min, cv.max))
+    }
+
+    pub fn set_gain(&self, value: f64) -> Result<(), raw::QHYError> {
+        raw::set_param(&self.handle, types::ControlId::Gain, value)
+    }
+
+    pub fn set_offset(&self, value: f64) -> Result<(), raw::QHYError> {
+        raw::set_param(&self.handle, types::ControlId::Offset, value)
+    }
+
+    pub fn set_exposure(&self, value: f64) -> Result<(), raw::QHYError> {
+        raw::set_param(&self.handle, types::ControlId::Exposure, value)
+    }
 }
 
 pub struct SdkContext {
