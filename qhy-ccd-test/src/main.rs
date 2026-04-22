@@ -1,10 +1,10 @@
-use libqhy::*;
+use libqhy::raw::*;
 use log::{debug, error, info};
 use rfitsio::hdu::headers::{FITSHeader, FITSValue};
 use rfitsio::{FITSFile, HDU};
 use std::io::BufRead;
 
-fn probe_camera(idx: u32) -> Result<(), libqhy::QHYError> {
+fn probe_camera(idx: u32) -> Result<(), libqhy::raw::QHYError> {
     let id = get_camera_id(idx)?;
     debug!("Found camera {}", id);
     let handle = open_camera(&id)?;
