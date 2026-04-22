@@ -266,6 +266,10 @@ pub fn set_param(handle: &CameraHandle, control: ControlId, value: f64) -> Resul
     })
 }
 
+pub fn get_param(handle: &CameraHandle, control: ControlId) -> f64 {
+    unsafe { libqhy_sys::camera::GetQHYCCDParam(handle.as_ptr(), control as i32) }
+}
+
 pub fn exp_single_frame(handle: &CameraHandle) -> Result<(), QHYError> {
     let ret = unsafe { libqhy_sys::camera::ExpQHYCCDSingleFrame(handle.as_ptr()) };
     // The SDK docs say any non-QHYCCD_ERROR return is success for this call.

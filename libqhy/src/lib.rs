@@ -36,6 +36,12 @@ impl QhyCcd {
     pub fn set_bin(&self, bin: u32) -> Result<(), raw::QHYError> {
         raw::set_bin_mode(&self.handle, bin, bin)
     }
+
+    pub fn temperature(&self) -> Option<f64> {
+        self.controls
+            .contains_key(&types::ControlId::CurTemp)
+            .then(|| raw::get_param(&self.handle, types::ControlId::CurTemp))
+    }
 }
 
 pub struct SdkContext {

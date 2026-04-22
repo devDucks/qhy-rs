@@ -3,7 +3,7 @@ use astrotools::{
     properties::{Permission, Property, RangeProperty},
     types::{DevType, DeviceType},
 };
-use libqhy::{QhyCcd, raw::CameraHandle};
+use libqhy::{QhyCcd, raw::CameraHandle, types::ControlId};
 
 pub struct QhyLightspeed {
     camera_id: String,
@@ -12,12 +12,16 @@ pub struct QhyLightspeed {
     exposure: RangeProperty<f64>,
     gain: RangeProperty<f64>,
     offset: RangeProperty<f64>,
-    temperature: Property<f64>,
+    temperature: Option<Property<f64>>,
     pixel_size: Property<f64>,
 }
 
 impl From<QhyCcd> for QhyLightspeed {
     fn from(cam: QhyCcd) -> Self {
+        let temperature = cam
+            .controls
+            .contains_key(&ControlId::CurTemp)
+            .then(|| Property::new(0.0, Permission::ReadOnly));
         Self {
             camera_id: cam.id().to_string(),
             handle: cam.handle,
@@ -25,7 +29,7 @@ impl From<QhyCcd> for QhyLightspeed {
             exposure: RangeProperty::new(1000.0, Permission::ReadWrite, 1.0, 3_600_000_000.0),
             gain: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 100.0),
             offset: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 255.0),
-            temperature: Property::new(0.0, Permission::ReadOnly),
+            temperature,
             pixel_size: Property::new(cam.chip_info.pixel_width, Permission::ReadOnly),
         }
     }
