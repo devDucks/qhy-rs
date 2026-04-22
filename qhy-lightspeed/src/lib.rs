@@ -13,6 +13,7 @@ pub struct QhyLightspeed {
     gain: RangeProperty<f64>,
     offset: RangeProperty<f64>,
     temperature: Property<f64>,
+    pixel_size: Property<f64>,
 }
 
 impl From<QhyCcd> for QhyLightspeed {
@@ -25,6 +26,7 @@ impl From<QhyCcd> for QhyLightspeed {
             gain: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 100.0),
             offset: RangeProperty::new(0.0, Permission::ReadWrite, 0.0, 255.0),
             temperature: Property::new(0.0, Permission::ReadOnly),
+            pixel_size: Property::new(cam.chip_info.pixel_width, Permission::ReadOnly),
         }
     }
 }
