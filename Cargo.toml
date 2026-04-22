@@ -10,5 +10,5 @@ log = "0.4.29"
 resolver = "3"
 members = [
   "libqhy-sys",
-  "libqhy", "qhy-ccd-test",
+  "libqhy", "qhy-ccd-test", "qhy-lightspeed",
 ]
