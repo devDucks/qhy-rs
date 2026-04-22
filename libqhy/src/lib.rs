@@ -15,10 +15,24 @@ impl QhyCcd {
     }
 }
 
-pub fn init_sdk() -> Vec<QhyCcd> {
-    if raw::init_resources().is_err() {
-        return vec![];
+pub struct SdkContext {
+    pub cameras: Vec<QhyCcd>,
+}
+
+impl Drop for SdkContext {
+    fn drop(&mut self) {
+        self.cameras.clear();
+        let _ = raw::release_resources();
     }
+}
+
+#[derive(Debug)]
+pub enum SdkError {
+    InitFailed,
+}
+
+pub fn init_sdk() -> Result<SdkContext, SdkError> {
+    raw::init_resources().map_err(|_| SdkError::InitFailed)?;
 
     let count = raw::get_num_of_connected_cameras();
     let mut cameras = Vec::with_capacity(count as usize);
@@ -43,5 +57,5 @@ pub fn init_sdk() -> Vec<QhyCcd> {
         });
     }
 
-    cameras
+    Ok(SdkContext { cameras })
 }
