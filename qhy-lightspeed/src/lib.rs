@@ -13,6 +13,7 @@ pub struct QhyLightspeed {
     offset: RangeProperty<f64>,
     temperature: Option<Property<f64>>,
     pixel_size: Property<f64>,
+    is_exposing: Property<bool>,
 }
 
 impl QhyLightspeed {
@@ -56,6 +57,7 @@ impl From<QhyCcd> for QhyLightspeed {
         let (offset_min, offset_max) = cam.offset_range().unwrap_or((0.0, 255.0));
         let offset_cur = cam.offset().unwrap_or(0.0);
         let pixel_size = cam.chip_info.pixel_width;
+        let is_exposing = cam.is_exposing();
 
         Self {
             gain: RangeProperty::new(gain_cur, Permission::ReadWrite, gain_min, gain_max),
@@ -64,6 +66,7 @@ impl From<QhyCcd> for QhyLightspeed {
             temperature,
             pixel_size: Property::new(pixel_size, Permission::ReadOnly),
             connected: Property::new(true, Permission::ReadWrite),
+            is_exposing: Property::new(is_exposing, Permission::ReadOnly),
             camera: cam,
         }
     }
@@ -80,6 +83,7 @@ impl Lightspeed for QhyLightspeed {
         let live_temp = self.camera.temperature();
         let live_gain = self.camera.gain();
         let live_offset = self.camera.offset();
+        let live_is_exposing = self.camera.is_exposing();
 
         if let (Some(prop), Some(val)) = (&mut self.temperature, live_temp) {
             let _ = prop.update_int(val);
@@ -90,6 +94,7 @@ impl Lightspeed for QhyLightspeed {
         if let Some(val) = live_offset {
             let _ = self.offset.update_int(val);
         }
+        let _ = self.is_exposing.update_int(live_is_exposing);
     }
 
     fn update_property<T>(&mut self, _prop_name: &str, _val: T) -> Result<(), LightspeedError> {

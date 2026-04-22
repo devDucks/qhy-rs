@@ -78,6 +78,10 @@ impl QhyCcd {
     pub fn set_exposure(&self, value: f64) -> Result<(), raw::QHYError> {
         raw::set_param(&self.handle, types::ControlId::Exposure, value)
     }
+
+    pub fn is_exposing(&self) -> bool {
+        raw::get_param(&self.handle, types::ControlId::IsExposingDone) == 0.0
+    }
 }
 
 pub struct SdkContext {
