@@ -15,6 +15,10 @@ impl QhyCcd {
     pub fn id(&self) -> &str {
         &self.id
     }
+
+    pub fn set_bin(&self, bin: u32) -> Result<(), raw::QHYError> {
+        raw::set_bin_mode(&self.handle, bin, bin)
+    }
 }
 
 pub struct SdkContext {
