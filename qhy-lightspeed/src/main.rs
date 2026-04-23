@@ -76,6 +76,7 @@ fn main() {
 
     let mut mqtt_opts = MqttOptions::new("qhy-lightspeed", &args.host, args.port);
     mqtt_opts.set_keep_alive(Duration::from_secs(30));
+    mqtt_opts.set_max_packet_size(1024 * 10000, 1024 * 10000);
     let (client, mut connection) = Client::new(mqtt_opts, 16);
 
     client
