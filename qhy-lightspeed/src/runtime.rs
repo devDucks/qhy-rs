@@ -2,10 +2,11 @@ use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+use crate::ExposureValue;
 use astrotools::Lightspeed;
 use astrotools::properties::UpdatePropertyRequest;
 
-use crate::{ExposureState, ExposureValue, QhyLightspeed};
+use crate::{ExposureState, QhyLightspeed};
 
 pub enum Command {
     Update(UpdatePropertyRequest),
@@ -69,7 +70,13 @@ fn run_device(
     loop {
         let tick = Instant::now();
 
-        device.sync_state();
+        // When the camera is exposing the USB incoming calls are not
+        // making it through so there is no point polling the camera state
+        // If the exposure is ongoing.
+        if !matches!(device.exposure_state, ExposureState::ReadingOut) {
+            log::info!("Polling state");
+            device.sync_state();
+        }
 
         if let Ok(payload) = serde_json::to_string(&device) {
             let _ = state_tx.try_send(OutboundMessage {
@@ -78,14 +85,11 @@ fn run_device(
             });
         }
 
-        if let ExposureState::ExposureDone(_) = device.exposure_state {
-            if let Some(frame) = device.collect_frame() {
-                log::info!("Sending frame over the wire");
-                publish_frame(frame, &topic, &state_tx);
-            } else {
-                log::warn!("No frame received");
-            }
-            device.exposure_state = ExposureState::Idle;
+        device.poll_exposure();
+
+        if let Some(frame) = device.poll_readout() {
+            log::info!("Sending frame over the wire");
+            publish_frame(frame, &topic, &state_tx);
         }
 
         loop {

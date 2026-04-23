@@ -1,5 +1,11 @@
 pub mod runtime;
 
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+    mpsc,
+};
+
 use serde::{Deserialize, Serialize, Serializer};
 
 use astrotools::{
@@ -40,27 +46,29 @@ pub struct Frame {
 }
 
 #[derive(Debug, Serialize)]
-enum ExposureState {
+pub enum ExposureState {
     Idle,
-    //Exposing(FrameType),
-    ExposureDone(FrameType),
+    Exposing(FrameType),
+    ReadingOut,
 }
 
 #[derive(Serialize)]
 pub struct QhyLightspeed {
     #[serde(skip)]
-    camera: QhyCcd,
+    camera: Arc<QhyCcd>,
     #[serde(skip)]
     frame_buf: Vec<u8>,
     exposure_state: ExposureState,
-    connected: Property<bool>,
+    #[serde(skip)]
+    exposure_done: Option<Arc<AtomicBool>>,
+    #[serde(skip)]
+    readout_rx: Option<mpsc::Receiver<(Option<Frame>, Vec<u8>)>>,
     #[serde(skip)]
     exposure: RangeProperty<f64>,
     gain: RangeProperty<f64>,
     offset: RangeProperty<f64>,
     temperature: Option<Property<f64>>,
     pixel_size: Property<f64>,
-    is_exposing: Property<bool>,
 }
 
 impl QhyLightspeed {
@@ -104,49 +112,87 @@ impl QhyLightspeed {
             .set_exposure(val.duration_us as f64)
             .map_err(|_| LightspeedError::DeviceConnectionError)?;
 
-        log::info!("ExpQHYCCDSingleFrame: start");
-        self.camera
-            .start_exposure()
-            .map_err(|_| LightspeedError::DeviceConnectionError)?;
-        log::info!("ExpQHYCCDSingleFrame: returned");
+        let done = Arc::new(AtomicBool::new(false));
+        self.exposure_done = Some(Arc::clone(&done));
+        self.exposure_state = ExposureState::Exposing(val.frame_type);
 
-        self.exposure_state = ExposureState::ExposureDone(val.frame_type);
+        let camera = Arc::clone(&self.camera);
+        std::thread::spawn(move || {
+            log::info!("ExpQHYCCDSingleFrame: start");
+            match camera.start_exposure() {
+                Ok(libqhy::raw::ExpResult::Exposing) => {
+                    while camera.is_exposing() {
+                        std::thread::sleep(std::time::Duration::from_millis(100));
+                    }
+                }
+                Ok(libqhy::raw::ExpResult::ReadDirectly) => {}
+                Err(_) => return,
+            }
+            log::info!("ExpQHYCCDSingleFrame: done");
+            done.store(true, Ordering::Release);
+        });
+
         Ok(())
     }
 
-    pub fn collect_frame(&mut self) -> Option<Frame> {
-        let ft = match self.exposure_state {
-            ExposureState::ExposureDone(ft) => ft,
-            _ => return None,
-        };
-
-        log::info!("GetQHYCCDSingleFrame: blocking readout start");
-        match self.camera.read_frame(&mut self.frame_buf) {
-            Ok(info) => {
-                log::info!(
-                    "GetQHYCCDSingleFrame: complete {}x{} @{}bpp",
-                    info.width,
-                    info.height,
-                    info.bpp
-                );
-                let data_len =
-                    info.width as usize * info.height as usize * (info.bpp as usize).div_ceil(8);
-                Some(Frame {
-                    frame_type: ft,
-                    width: info.width,
-                    height: info.height,
-                    bpp: info.bpp,
-                    channels: info.channels,
-                    data: self.frame_buf[..data_len].to_vec(),
-                })
-            }
-            Err(_) => {
-                log::error!("GetQHYCCDSingleFrame failed; dropping exposure");
-                self.exposure_state = ExposureState::Idle;
-                let _ = self.is_exposing.update_int(false);
-                None
+    pub fn poll_exposure(&mut self) {
+        if let ExposureState::Exposing(ft) = self.exposure_state {
+            if self
+                .exposure_done
+                .as_ref()
+                .is_some_and(|f| f.load(Ordering::Acquire))
+            {
+                self.start_readout(ft);
             }
         }
+    }
+
+    fn start_readout(&mut self, ft: FrameType) {
+        let camera = Arc::clone(&self.camera);
+        let buf = std::mem::take(&mut self.frame_buf);
+        let (tx, rx) = mpsc::sync_channel(1);
+        self.readout_rx = Some(rx);
+        self.exposure_state = ExposureState::ReadingOut;
+
+        std::thread::spawn(move || {
+            log::info!("GetQHYCCDSingleFrame: start");
+            let mut buf = buf;
+            let result = match camera.read_frame(&mut buf) {
+                Ok(info) => {
+                    log::info!(
+                        "GetQHYCCDSingleFrame: complete {}x{} @{}bpp",
+                        info.width,
+                        info.height,
+                        info.bpp
+                    );
+                    let data_len = info.width as usize
+                        * info.height as usize
+                        * (info.bpp as usize).div_ceil(8);
+                    Some(Frame {
+                        frame_type: ft,
+                        width: info.width,
+                        height: info.height,
+                        bpp: info.bpp,
+                        channels: info.channels,
+                        data: buf[..data_len].to_vec(),
+                    })
+                }
+                Err(_) => {
+                    log::error!("GetQHYCCDSingleFrame failed; dropping exposure");
+                    None
+                }
+            };
+            tx.send((result, buf)).ok();
+        });
+    }
+
+    pub fn poll_readout(&mut self) -> Option<Frame> {
+        let rx = self.readout_rx.as_ref()?;
+        let (frame, buf) = rx.try_recv().ok()?;
+        self.frame_buf = buf;
+        self.readout_rx = None;
+        self.exposure_state = ExposureState::Idle;
+        frame
     }
 }
 
@@ -168,11 +214,11 @@ impl From<QhyCcd> for QhyLightspeed {
             exposure: RangeProperty::new(1000.0, Permission::ReadWrite, 1.0, 3_600_000_000.0),
             temperature,
             pixel_size: Property::new(pixel_size, Permission::ReadOnly),
-            connected: Property::new(true, Permission::ReadWrite),
-            is_exposing: Property::new(false, Permission::ReadOnly),
             frame_buf: vec![0u8; buf_size],
             exposure_state: ExposureState::Idle,
-            camera: cam,
+            exposure_done: None,
+            readout_rx: None,
+            camera: Arc::new(cam),
         }
     }
 }

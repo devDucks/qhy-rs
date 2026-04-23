@@ -9,8 +9,9 @@ pub struct QHYError {}
 
 pub struct CameraHandle(*mut libqhy_sys::camera::qhyccd_handle);
 
-// Safety: the QHY SDK is per-handle; each handle is used from exactly one thread.
+// Safety: the QHY SDK is per-handle; each handle is used from exactly one thread at a time.
 unsafe impl Send for CameraHandle {}
+unsafe impl Sync for CameraHandle {}
 
 impl Drop for CameraHandle {
     fn drop(&mut self) {
@@ -273,6 +274,7 @@ pub fn get_param(handle: &CameraHandle, control: ControlId) -> f64 {
     unsafe { libqhy_sys::camera::GetQHYCCDParam(handle.as_ptr(), control as i32) }
 }
 
+#[derive(Debug)]
 pub enum ExpResult {
     /// Camera returned QHYCCD_READ_DIRECTLY — frame is already in the buffer,
     /// call get_single_frame immediately.
