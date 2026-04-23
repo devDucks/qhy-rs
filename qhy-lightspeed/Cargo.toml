@@ -6,6 +6,10 @@ edition = "2024"
 [dependencies]
 astrotools = "0.9.0"
 base64 = "0.22"
+clap = { version = "4", features = ["derive"] }
+env_logger = "0.11.10"
 libqhy = { path = "../libqhy" }
+log = "0.4.29"
+rumqttc = "0.24"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
