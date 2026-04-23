@@ -78,7 +78,6 @@ fn run_device(
             });
         }
 
-        log::info!("Actual exposure state: {:?}", device.exposure_state);
         if let ExposureState::ExposureDone(_) = device.exposure_state {
             if let Some(frame) = device.collect_frame() {
                 log::info!("Sending frame over the wire");
