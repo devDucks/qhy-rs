@@ -39,9 +39,11 @@ pub struct Frame {
     pub data: Vec<u8>,
 }
 
+#[derive(Debug, Serialize)]
 enum ExposureState {
     Idle,
-    Exposing(FrameType),
+    //Exposing(FrameType),
+    ExposureDone(FrameType),
 }
 
 #[derive(Serialize)]
@@ -50,7 +52,6 @@ pub struct QhyLightspeed {
     camera: QhyCcd,
     #[serde(skip)]
     frame_buf: Vec<u8>,
-    #[serde(skip)]
     exposure_state: ExposureState,
     connected: Property<bool>,
     #[serde(skip)]
@@ -98,60 +99,40 @@ impl QhyLightspeed {
             .map_err(|_| LightspeedError::DeviceConnectionError)
     }
 
-    pub fn start_exposure(&mut self, val: ExposureValue) -> Result<Option<Frame>, LightspeedError> {
+    pub fn start_exposure(&mut self, val: ExposureValue) -> Result<(), LightspeedError> {
         self.camera
             .set_exposure(val.duration_us as f64)
             .map_err(|_| LightspeedError::DeviceConnectionError)?;
 
-        match self
-            .camera
+        log::info!("ExpQHYCCDSingleFrame: start");
+        self.camera
             .start_exposure()
-            .map_err(|_| LightspeedError::DeviceConnectionError)?
-        {
-            libqhy::raw::ExpResult::ReadDirectly => {
-                let info = self
-                    .camera
-                    .read_frame(&mut self.frame_buf)
-                    .map_err(|_| LightspeedError::DeviceConnectionError)?;
-                let _ = self.is_exposing.update_int(false);
-                Ok(Some(Frame {
-                    frame_type: val.frame_type,
-                    width: info.width,
-                    height: info.height,
-                    bpp: info.bpp,
-                    channels: info.channels,
-                    data: self.frame_buf[..info.width as usize
-                        * info.height as usize
-                        * (info.bpp as usize).div_ceil(8)]
-                        .to_vec(),
-                }))
-            }
-            libqhy::raw::ExpResult::Exposing => {
-                self.exposure_state = ExposureState::Exposing(val.frame_type);
-                let _ = self.is_exposing.update_int(true);
-                Ok(None)
-            }
-        }
+            .map_err(|_| LightspeedError::DeviceConnectionError)?;
+        log::info!("ExpQHYCCDSingleFrame: returned");
+
+        self.exposure_state = ExposureState::ExposureDone(val.frame_type);
+        Ok(())
     }
 
-    /// Returns a completed frame if the exposure has finished since the last call.
-    /// Must be called each tick after `sync_state`.
-    pub fn try_collect_frame(&mut self) -> Option<Frame> {
-        let frame_type = match self.exposure_state {
-            ExposureState::Exposing(ft) => ft,
-            ExposureState::Idle => return None,
+    pub fn collect_frame(&mut self) -> Option<Frame> {
+        let ft = match self.exposure_state {
+            ExposureState::ExposureDone(ft) => ft,
+            _ => return None,
         };
-        if self.camera.is_exposing() {
-            return None;
-        }
+
+        log::info!("GetQHYCCDSingleFrame: blocking readout start");
         match self.camera.read_frame(&mut self.frame_buf) {
             Ok(info) => {
-                self.exposure_state = ExposureState::Idle;
-                let _ = self.is_exposing.update_int(false);
+                log::info!(
+                    "GetQHYCCDSingleFrame: complete {}x{} @{}bpp",
+                    info.width,
+                    info.height,
+                    info.bpp
+                );
                 let data_len =
                     info.width as usize * info.height as usize * (info.bpp as usize).div_ceil(8);
                 Some(Frame {
-                    frame_type,
+                    frame_type: ft,
                     width: info.width,
                     height: info.height,
                     bpp: info.bpp,
@@ -160,6 +141,7 @@ impl QhyLightspeed {
                 })
             }
             Err(_) => {
+                log::error!("GetQHYCCDSingleFrame failed; dropping exposure");
                 self.exposure_state = ExposureState::Idle;
                 let _ = self.is_exposing.update_int(false);
                 None
@@ -178,7 +160,6 @@ impl From<QhyCcd> for QhyLightspeed {
         let (offset_min, offset_max) = cam.offset_range().unwrap_or((0.0, 255.0));
         let offset_cur = cam.offset().unwrap_or(0.0);
         let pixel_size = cam.chip_info.pixel_width;
-        let is_exposing = cam.is_exposing();
         let buf_size = cam.image_buffer_size() as usize;
 
         Self {
@@ -188,7 +169,7 @@ impl From<QhyCcd> for QhyLightspeed {
             temperature,
             pixel_size: Property::new(pixel_size, Permission::ReadOnly),
             connected: Property::new(true, Permission::ReadWrite),
-            is_exposing: Property::new(is_exposing, Permission::ReadOnly),
+            is_exposing: Property::new(false, Permission::ReadOnly),
             frame_buf: vec![0u8; buf_size],
             exposure_state: ExposureState::Idle,
             camera: cam,
@@ -207,7 +188,6 @@ impl Lightspeed for QhyLightspeed {
         let live_temp = self.camera.temperature();
         let live_gain = self.camera.gain();
         let live_offset = self.camera.offset();
-        let live_is_exposing = self.camera.is_exposing();
 
         if let (Some(prop), Some(val)) = (&mut self.temperature, live_temp) {
             let _ = prop.update_int(val);
@@ -218,7 +198,6 @@ impl Lightspeed for QhyLightspeed {
         if let Some(val) = live_offset {
             let _ = self.offset.update_int(val);
         }
-        let _ = self.is_exposing.update_int(live_is_exposing);
     }
 
     fn update_property(&mut self, prop_name: &str, val: PropValue) -> Result<(), LightspeedError> {

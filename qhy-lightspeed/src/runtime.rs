@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 use astrotools::Lightspeed;
 use astrotools::properties::UpdatePropertyRequest;
 
-use crate::{ExposureValue, QhyLightspeed};
+use crate::{ExposureState, ExposureValue, QhyLightspeed};
 
 pub enum Command {
     Update(UpdatePropertyRequest),
@@ -78,16 +78,24 @@ fn run_device(
             });
         }
 
-        if let Some(frame) = device.try_collect_frame() {
-            publish_frame(frame, &topic, &state_tx);
+        log::info!("Actual exposure state: {:?}", device.exposure_state);
+        if let ExposureState::ExposureDone(_) = device.exposure_state {
+            if let Some(frame) = device.collect_frame() {
+                log::info!("Sending frame over the wire");
+                publish_frame(frame, &topic, &state_tx);
+            } else {
+                log::warn!("No frame received");
+            }
+            device.exposure_state = ExposureState::Idle;
         }
 
         loop {
             match cmd_rx.try_recv() {
                 Ok(Command::Shutdown) => return,
                 Ok(Command::Expose(val)) => {
-                    if let Ok(Some(frame)) = device.start_exposure(val) {
-                        publish_frame(frame, &topic, &state_tx);
+                    log::debug!("Starting exposure {:?}", val);
+                    if let Err(e) = device.start_exposure(val) {
+                        log::error!("start_exposure failed: {:?}", e);
                     }
                 }
                 Ok(Command::Update(req)) => {
