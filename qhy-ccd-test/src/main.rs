@@ -88,8 +88,8 @@ fn acquire_dark_frame(handle: &CameraHandle, idx: u32) -> Result<(), String> {
     set_resolution(&handle, 0, 0, chip.image_width, chip.image_height)
         .map_err(|_| "Failed to set full-frame resolution")?;
 
-    // 1 second expressed in microseconds (SDK unit for CONTROL_EXPOSURE)
-    set_param(&handle, ControlId::Exposure, 1_000_000.0)
+    // 10 second expressed in microseconds (SDK unit for CONTROL_EXPOSURE)
+    set_param(&handle, ControlId::Exposure, 5_000_000.0)
         .map_err(|_| "Failed to set exposure time")?;
 
     // Snapshot of controls for metadata (temperature etc.)
@@ -98,8 +98,9 @@ fn acquire_dark_frame(handle: &CameraHandle, idx: u32) -> Result<(), String> {
     let buf_size = get_image_buffer_size(&handle) as usize;
     let mut buf = vec![0u8; buf_size];
 
-    info!("Exposing for 1 second...");
-    exp_single_frame(&handle).map_err(|_| "Exposure trigger failed")?;
+    info!("Starting exposure...");
+    let exp_result = exp_single_frame(&handle).map_err(|_| "Exposure trigger failed")?;
+    info!("ExpQHYCCDSingleFrame returned: {:?}", exp_result);
     // GetQHYCCDSingleFrame blocks until the exposure completes and the frame is read out.
     let frame = get_single_frame(&handle, &mut buf).map_err(|_| "Failed to read frame data")?;
     info!(
