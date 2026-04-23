@@ -157,6 +157,23 @@ pub fn init_sdk() -> Result<SdkContext, SdkError> {
             Ok(info) => info,
             Err(_) => continue,
         };
+        if raw::set_stream_mode(&handle, raw::StreamMode::SingleFrame).is_err() {
+            continue;
+        }
+        if raw::set_read_mode(&handle, 0).is_err() {
+            continue;
+        }
+        if raw::init_camera(&handle).is_err() {
+            continue;
+        }
+        if raw::set_bin_mode(&handle, 1, 1).is_err() {
+            continue;
+        }
+        if raw::set_resolution(&handle, 0, 0, chip_info.image_width, chip_info.image_height)
+            .is_err()
+        {
+            continue;
+        }
         let controls = raw::get_available_controls(&handle);
         let fw_ver = match raw::read_camera_fw(&handle) {
             Ok(v) => v,
